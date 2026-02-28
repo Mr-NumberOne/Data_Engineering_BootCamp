@@ -1,0 +1,3 @@
+[submodule "Lectures/class_material"]
+	path = Lectures/class_material
+	url = https://github.com/NoraHussain/Python-Course.git
