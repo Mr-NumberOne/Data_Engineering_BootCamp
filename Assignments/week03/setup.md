@@ -29,6 +29,14 @@ CREATE DATABASE "project-w3-db";
    ```
 4. Create your local Environment Configuration:
    - Copy the provided `backend/.env.example` file and rename the new copy to `.env`.
+     - **Linux/macOS:**
+       ```bash
+       cp .env.example .env
+       ```
+     - **Windows (PowerShell):**
+       ```powershell
+       Copy-Item .env.example .env
+       ```
    - Open `.env` and fill in the placeholders (such as your actual PostgreSQL password and database name). The system will dynamically create the tables upon launch.
 5. Run the FastAPI development server:
    ```bash
@@ -44,6 +52,14 @@ CREATE DATABASE "project-w3-db";
    ```
 2. Create your local Environment Configuration:
    - Copy the provided `frontend/.env.example` file and rename the new copy to `.env`.
+     - **Linux/macOS:**
+       ```bash
+       cp .env.example .env
+       ```
+     - **Windows (PowerShell):**
+       ```powershell
+       Copy-Item .env.example .env
+       ```
    - The default `VITE_API_URL` is already set to `http://localhost:8000` assuming you are running the backend locally.
 3. Install Node dependencies (already initialized):
    ```bash
@@ -55,7 +71,7 @@ CREATE DATABASE "project-w3-db";
    ```
    > **Note**: The frontend will run on `http://localhost:5173`. Make sure the backend is running so the frontend can retrieve data!
 
-## Default Admin User
-An admin user is automatically created upon first backend startup:
+## Default Test User
+An test user is automatically created upon first backend startup:
 - **Email**: `admin@project.com`
 - **Password**: `admin123`
