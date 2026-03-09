@@ -1,6 +1,3 @@
-[submodule "Lectures/learning_projects/simple_supermartket_pipeline"]
-	path = Lectures/learning_projects/simple_supermartket_pipeline
-	url = https://github.com/Mr-NumberOne/Data-Engineering--A-Simple-Supermarket-Data-Pipeline.git
 [submodule "Lectures/Class_Materials/Python_Basics"]
 	path = Lectures/Class_Materials/Python_Basics
 	url = https://github.com/NoraHussain/Python-Course.git
@@ -13,3 +10,6 @@
 [submodule "Lectures/Class_Materials/fast_api_basic_demo"]
 	path = Lectures/Class_Materials/fast_api_basic_demo
 	url = https://github.com/NoraHussain/fast_api_project.git
+[submodule "Lectures/learning_projects/simple_supermartket_pipeline_project"]
+	path = Lectures/learning_projects/simple_supermartket_pipeline_project
+	url = https://github.com/Mr-NumberOne/Data-Engineering--A-Simple-Supermarket-Data-Pipeline.git
