@@ -1,3 +1,15 @@
-[submodule "Lectures/class_material"]
-	path = Lectures/class_material
+[submodule "Lectures/learning_projects/simple_supermartket_pipeline"]
+	path = Lectures/learning_projects/simple_supermartket_pipeline
+	url = https://github.com/Mr-NumberOne/Data-Engineering--A-Simple-Supermarket-Data-Pipeline.git
+[submodule "Lectures/Class_Materials/Python_Basics"]
+	path = Lectures/Class_Materials/Python_Basics
 	url = https://github.com/NoraHussain/Python-Course.git
+[submodule "Lectures/Class_Materials/data_sources"]
+	path = Lectures/Class_Materials/data_sources
+	url = https://github.com/NoraHussain/data-source.git
+[submodule "Lectures/Class_Materials/sql_fundamentals"]
+	path = Lectures/Class_Materials/sql_fundamentals
+	url = https://github.com/NoraHussain/sql-fundamentals.git
+[submodule "Lectures/Class_Materials/fast_api_basic_demo"]
+	path = Lectures/Class_Materials/fast_api_basic_demo
+	url = https://github.com/NoraHussain/fast_api_project.git
