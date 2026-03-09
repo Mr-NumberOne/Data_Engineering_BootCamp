@@ -2,7 +2,7 @@
 __pycache__/
 resources/
 Lectures/My Class Practice
-Lectures/learning_projects
+# Lectures/learning_projects
 .vscode/
 *.py[cod]
 *$py.class
