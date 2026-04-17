@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+echo "Stopping book-scraper-api service..."
+systemctl stop book-scraper-api.service || true
+systemctl disable book-scraper-api.service || true
+
+echo "Removing ufw rule for port 8888..."
+if command -v ufw > /dev/null; then
+    ufw delete allow 8888/tcp || true
+    echo "Port 8888/tcp removed from ufw."
+fi
+
+exit 0

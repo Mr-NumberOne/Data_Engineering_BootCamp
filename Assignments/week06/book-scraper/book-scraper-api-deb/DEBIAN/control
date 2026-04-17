@@ -1,0 +1,10 @@
+Package: book-scraper-api
+Version: 1.0-1
+Section: web
+Priority: optional
+Architecture: all
+Depends: python3, python3-venv, ufw, systemd
+Maintainer: AMA <ama@example.com>
+Description: A web scraper and FastAPI service for fetching book data.
+ This package sets up a FastAPI network service that pulls data from books.toscrape.com
+ and serves it over port 8888. It includes an automatic systemd setup and ufw firewall rules.

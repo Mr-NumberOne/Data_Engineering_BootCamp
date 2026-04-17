@@ -1,0 +1,10 @@
+Package: remote-job-scraper-api
+Version: 1.0-1
+Section: web
+Priority: optional
+Architecture: all
+Depends: python3, python3-venv, ufw, systemd
+Maintainer: AMA <ama@example.com>
+Description: A web scraper and FastAPI service for fetching remote developer jobs.
+ This package sets up a FastAPI network service that pulls data from python.org/jobs
+ and serves it over port 8889. It includes an automatic systemd setup and ufw firewall rules.

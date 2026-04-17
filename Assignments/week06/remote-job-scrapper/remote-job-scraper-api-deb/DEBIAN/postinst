@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+APP_DIR="/opt/remote-job-scraper-api"
+VENV_DIR="$APP_DIR/venv"
+
+echo "Setting up Python virtual environment..."
+python3 -m venv "$VENV_DIR"
+
+echo "Installing requirements..."
+"$VENV_DIR/bin/pip" install --upgrade pip
+"$VENV_DIR/bin/pip" install -r "$APP_DIR/requirements.txt"
+
+echo "Configuring firewall (ufw)..."
+if command -v ufw > /dev/null; then
+    ufw allow 8889/tcp
+    echo "Port 8889/tcp allowed through ufw."
+else
+    echo "Warning: ufw is not installed. Skipping firewall configuration."
+fi
+
+echo "Starting systemd service..."
+systemctl daemon-reload
+systemctl enable remote-job-scraper-api.service
+systemctl restart remote-job-scraper-api.service
+
+exit 0
