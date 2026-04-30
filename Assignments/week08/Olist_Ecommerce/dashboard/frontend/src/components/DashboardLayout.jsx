@@ -57,7 +57,7 @@ const Topbar = ({ options, filters, setFilters, theme, toggleTheme }) => {
                         <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
                     </button>
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden border border-primary/20">
-                        <img src="https://ui-avatars.com/api/?name=Olist+Admin&background=476eae&color=fff" alt="Profile" />
+                        <img src="https://ui-avatars.com/api/?name=Olist+Admin&background=4d6fb0&color=fff" alt="Profile" />
                     </div>
                 </div>
             </div>

@@ -28,7 +28,7 @@ def get_joins(state: Optional[str] = None, year_month: Optional[str] = None, tab
 
 @router.get("/filters/options")
 def get_filter_options(db: Session = Depends(get_db)):
-    states = db.execute(text("SELECT DISTINCT customer_state FROM dwh.dim_customer ORDER BY customer_state")).fetchall()
+    states = db.execute(text("SELECT DISTINCT customer_state FROM dwh.dim_customer WHERE is_current = TRUE ORDER BY customer_state")).fetchall()
     months = db.execute(text("SELECT DISTINCT year_month FROM dwh.dim_date WHERE year_month IS NOT NULL ORDER BY year_month DESC")).fetchall()
     
     return {
@@ -46,19 +46,28 @@ def get_kpis(state: Optional[str] = None, year_month: Optional[str] = None, db: 
             ROUND(SUM(f.price)::numeric, 2) AS total_revenue,
             COUNT(DISTINCT f.order_id) AS total_orders,
             ROUND((SUM(f.price) / NULLIF(COUNT(DISTINCT f.order_id), 0))::numeric, 2) AS aov,
-            COUNT(DISTINCT f.order_item_key) AS total_items
+            COUNT(DISTINCT f.order_item_key) AS total_items,
+            ROUND(SUM(f.freight_value)::numeric, 2) AS total_freight,
+            ROUND(AVG(r.review_score)::numeric, 2) AS avg_review_score
         FROM dwh.fact_order_items f
+        LEFT JOIN (
+            SELECT order_id, AVG(review_score) as review_score 
+            FROM dwh.fact_reviews 
+            GROUP BY order_id
+        ) r ON f.order_id = r.order_id
         {joins}
         {where}
     """)
     result = db.execute(query).fetchone()
     if not result:
-        return {"total_revenue": 0, "total_orders": 0, "aov": 0, "total_items": 0}
+        return {"total_revenue": 0, "total_orders": 0, "aov": 0, "total_items": 0, "total_freight": 0, "avg_review_score": 0}
     return {
         "total_revenue": float(result[0] or 0),
         "total_orders": result[1] or 0,
         "aov": float(result[2] or 0),
-        "total_items": result[3] or 0
+        "total_items": result[3] or 0,
+        "total_freight": float(result[4] or 0),
+        "avg_review_score": float(result[5] or 0)
     }
 
 @router.get("/sales-trend")
@@ -155,18 +164,19 @@ def get_customer_rfm(state: Optional[str] = None, year_month: Optional[str] = No
     
     query = text(f"""
         SELECT
-            f.customer_key,
-            c.customer_city,
-            c.customer_state,
+            c.customer_unique_id,
+            MAX(c_curr.customer_city) AS customer_city,
+            MAX(c_curr.customer_state) AS customer_state,
             COUNT(DISTINCT f.order_id) AS order_count,
             ROUND(SUM(f.price)::NUMERIC, 2) AS total_spent,
             ROUND(AVG(f.price)::NUMERIC, 2) AS avg_order_value,
             MAX(d.full_date) AS last_order_date
         FROM dwh.fact_order_items f
         JOIN dwh.dim_customer c ON f.customer_key = c.customer_key
+        JOIN dwh.dim_customer c_curr ON c.customer_unique_id = c_curr.customer_unique_id AND c_curr.is_current = TRUE
         JOIN dwh.dim_date d ON f.purchase_date_key = d.date_key
         {where}
-        GROUP BY f.customer_key, c.customer_city, c.customer_state
+        GROUP BY c.customer_unique_id
         ORDER BY total_spent DESC
         LIMIT 20
     """)
@@ -190,19 +200,20 @@ def get_seller_performance(state: Optional[str] = None, year_month: Optional[str
     
     query = text(f"""
         SELECT
-            ds.seller_key,
-            ds.seller_city,
-            ds.seller_state,
+            ds.seller_id,
+            MAX(ds_curr.seller_city) AS seller_city,
+            MAX(ds_curr.seller_state) AS seller_state,
             COUNT(DISTINCT f.order_id) AS orders_fulfilled,
             ROUND(SUM(f.price)::NUMERIC, 2) AS total_revenue,
             ROUND(AVG(f.delivery_days)::NUMERIC, 1) AS avg_delivery_days,
             ROUND(AVG(r.review_score)::NUMERIC, 2) AS avg_review_score
         FROM dwh.fact_order_items f
         JOIN dwh.dim_seller ds ON f.seller_key = ds.seller_key
+        JOIN dwh.dim_seller ds_curr ON ds.seller_id = ds_curr.seller_id AND ds_curr.is_current = TRUE
         LEFT JOIN dwh.fact_reviews r ON f.order_id = r.order_id
         {joins}
         {where}
-        GROUP BY ds.seller_key, ds.seller_city, ds.seller_state
+        GROUP BY ds.seller_id
         ORDER BY total_revenue DESC
         LIMIT 20
     """)
@@ -244,13 +255,14 @@ def get_lead_conversion(db: Session = Depends(get_db)):
     # Origin conversion doesn't really map well to customer_state or purchase_date
     query = text("""
         SELECT
-            origin,
+            m.origin,
             COUNT(*) AS total_leads,
-            SUM(is_converted) AS converted_leads,
-            ROUND((SUM(is_converted) * 100.0 / COUNT(*))::NUMERIC, 1) AS conversion_rate_pct
-        FROM dwh.fact_leads
-        WHERE origin IS NOT NULL AND origin != 'unknown'
-        GROUP BY origin
+            SUM(f.is_converted) AS converted_leads,
+            ROUND((SUM(f.is_converted) * 100.0 / COUNT(*))::NUMERIC, 1) AS conversion_rate_pct
+        FROM dwh.fact_leads f
+        JOIN dwh.dim_marketing_origin m ON f.marketing_origin_key = m.marketing_origin_key
+        WHERE m.origin IS NOT NULL AND m.origin != 'unknown' AND m.marketing_origin_key != -1
+        GROUP BY m.origin
         ORDER BY total_leads DESC
     """)
     results = db.execute(query).fetchall()
@@ -273,7 +285,7 @@ def get_geo_distribution(year_month: Optional[str] = None, db: Session = Depends
         SELECT
             c.customer_state as state,
             ROUND(SUM(f.price)::NUMERIC, 2) AS total_revenue,
-            COUNT(DISTINCT f.customer_key) AS unique_customers
+            COUNT(DISTINCT c.customer_unique_id) AS unique_customers
         FROM dwh.fact_order_items f
         JOIN dwh.dim_customer c ON f.customer_key = c.customer_key
         {joins}
@@ -298,32 +310,32 @@ def get_cohorts(state: Optional[str] = None, db: Session = Depends(get_db)):
     query = text(f"""
         WITH customer_orders AS (
             SELECT
-                f.customer_key,
+                c.customer_unique_id,
                 d.year_month AS order_month,
-                ROW_NUMBER() OVER (PARTITION BY f.customer_key ORDER BY MIN(d.full_date)) AS order_seq
+                ROW_NUMBER() OVER (PARTITION BY c.customer_unique_id ORDER BY MIN(d.full_date)) AS order_seq
             FROM dwh.fact_order_items f
             JOIN dwh.dim_date d ON f.purchase_date_key = d.date_key
             LEFT JOIN dwh.dim_customer c ON f.customer_key = c.customer_key
             {where.replace('WHERE', 'WHERE ') if where else ''}
-            GROUP BY f.customer_key, d.year_month
+            GROUP BY c.customer_unique_id, d.year_month
         ),
         cohorts AS (
             SELECT
-                customer_key,
+                customer_unique_id,
                 order_month AS cohort_month
             FROM customer_orders
             WHERE order_seq = 1
         )
         SELECT
             c.cohort_month,
-            COUNT(DISTINCT c.customer_key) AS cohort_size,
-            COUNT(DISTINCT CASE WHEN co.order_seq > 1 THEN c.customer_key END) AS repeat_customers,
+            COUNT(DISTINCT c.customer_unique_id) AS cohort_size,
+            COUNT(DISTINCT CASE WHEN co.order_seq > 1 THEN c.customer_unique_id END) AS repeat_customers,
             ROUND((
-                COUNT(DISTINCT CASE WHEN co.order_seq > 1 THEN c.customer_key END) * 100.0 
-                / NULLIF(COUNT(DISTINCT c.customer_key), 0)
+                COUNT(DISTINCT CASE WHEN co.order_seq > 1 THEN c.customer_unique_id END) * 100.0 
+                / NULLIF(COUNT(DISTINCT c.customer_unique_id), 0)
             )::NUMERIC, 1) AS repeat_rate_pct
         FROM cohorts c
-        LEFT JOIN customer_orders co ON c.customer_key = co.customer_key
+        LEFT JOIN customer_orders co ON c.customer_unique_id = co.customer_unique_id
         GROUP BY c.cohort_month
         ORDER BY c.cohort_month
     """)
@@ -337,3 +349,44 @@ def get_cohorts(state: Optional[str] = None, db: Session = Depends(get_db)):
             "rate": float(r[3] or 0)
         } for r in results if r[0] is not None
     ]
+
+@router.get("/customers/satisfaction")
+def get_customer_satisfaction(state: Optional[str] = None, year_month: Optional[str] = None, db: Session = Depends(get_db)):
+    joins = get_joins(state, year_month)
+    where = get_filter_clause(state, year_month)
+    
+    query = text(f"""
+        SELECT 
+            r.review_score,
+            COUNT(DISTINCT r.review_id) as review_count
+        FROM dwh.fact_reviews r
+        JOIN dwh.fact_order_items f ON r.order_id = f.order_id
+        {joins}
+        {where}
+        GROUP BY r.review_score
+        ORDER BY r.review_score DESC
+    """)
+    results = db.execute(query).fetchall()
+    return [{"score": r[0], "count": r[1]} for r in results]
+
+@router.get("/logistics/freight-ratio")
+def get_freight_ratio(year_month: Optional[str] = None, db: Session = Depends(get_db)):
+    joins = get_joins(None, year_month)
+    where = get_filter_clause(None, year_month)
+    
+    query = text(f"""
+        SELECT 
+            c.customer_state as state,
+            ROUND(SUM(f.freight_value)::numeric, 2) as total_freight,
+            ROUND(SUM(f.price)::numeric, 2) as total_revenue,
+            ROUND((SUM(f.freight_value) / NULLIF(SUM(f.price), 0) * 100)::numeric, 2) as freight_ratio_pct
+        FROM dwh.fact_order_items f
+        JOIN dwh.dim_customer c ON f.customer_key = c.customer_key
+        {joins}
+        {where}
+        GROUP BY c.customer_state
+        ORDER BY freight_ratio_pct DESC
+        LIMIT 10
+    """)
+    results = db.execute(query).fetchall()
+    return [{"state": r[0], "freight": float(r[1]), "revenue": float(r[2]), "ratio": float(r[3] or 0)} for r in results]

@@ -1,6 +1,7 @@
 import React from 'react';
 import DeliveryPerformanceChart from '../components/DeliveryPerformanceChart';
 import GeoDistributionChart from '../components/GeoDistributionChart';
+import FreightRatioChart from '../components/FreightRatioChart';
 import { Database } from 'lucide-react';
 
 const LogisticsPage = ({ data, loading, theme }) => {
@@ -24,8 +25,9 @@ const LogisticsPage = ({ data, loading, theme }) => {
                 <div className="col-span-1">
                     <DeliveryPerformanceChart data={data.delivery} theme={theme} />
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-1 flex flex-col gap-6">
                     <GeoDistributionChart data={data.geo} theme={theme} />
+                    <FreightRatioChart data={data.freightRatio} theme={theme} />
                 </div>
             </div>
         </div>

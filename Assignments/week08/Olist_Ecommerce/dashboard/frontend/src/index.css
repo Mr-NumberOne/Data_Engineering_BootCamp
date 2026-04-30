@@ -5,18 +5,18 @@
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
-  /* Restored primary color #476eae with compatible blues */
-  --color-primary: #476eae; 
+  /* Updated primary color #4d6fb0 with compatible blues */
+  --color-primary: #4d6fb0; 
   --color-primaryLight: var(--primary-light-bg);
-  --color-secondary: #3b82f6; /* Vibrant Blue */
-  --color-tertiary: #0ea5e9;  /* Sky Blue */
+  --color-secondary: #6385c9; /* Lighter Blue */
+  --color-tertiary: #354e7d;  /* Darker Blue */
   
   --color-background: var(--bg-color);
   --color-surface: var(--surface-color);
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
-  --color-info: #476eae;
+  --color-info: #4d6fb0;
   
   --color-textPrimary: var(--text-primary);
   --color-textSecondary: var(--text-secondary);
@@ -50,7 +50,7 @@
   --text-secondary: #94A3B8; 
   --border-default: #334155; 
   --border-hover: #475569; 
-  --primary-light-bg: rgba(71, 110, 174, 0.2); 
+  --primary-light-bg: rgba(77, 111, 176, 0.2); 
 }
 
 body {

@@ -1,4 +1,5 @@
 import React from 'react';
+import InfoTooltip from './InfoTooltip';
 
 const CohortMatrix = ({ data, theme }) => {
     if (!data || data.length === 0) return (
@@ -14,15 +15,16 @@ const CohortMatrix = ({ data, theme }) => {
     const isDark = theme === 'dark';
 
     return (
-        <div className="bg-surface rounded-2xl shadow-soft border border-borderDefault w-full overflow-hidden flex flex-col h-full transition-colors duration-300">
+        <div className="bg-surface rounded-2xl shadow-soft border border-borderDefault w-full flex flex-col h-full transition-colors duration-300">
             <div className="p-6 border-b border-borderDefault flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded-[4px] bg-primaryLight text-primary text-[11px] font-semibold font-mono">GET</span>
+                <div className="flex items-center mb-1">
+                    <span className="px-2 py-0.5 rounded-[4px] bg-primaryLight text-primary text-[11px] font-semibold font-mono mr-3">GET</span>
                     <h2 className="text-[15px] font-semibold font-mono text-textPrimary">/v1/customers/cohorts</h2>
+                    <InfoTooltip text="A cohort analysis showing customer retention. The 'Repeat Rate' represents the percentage of customers acquired in that month who made at least one subsequent purchase." />
                 </div>
                 <p className="text-[13px] text-textSecondary font-sans">Repeat purchase rate by first-order month</p>
             </div>
-            <div className="overflow-x-auto max-h-96">
+            <div className="overflow-x-auto max-h-96 rounded-b-2xl">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-background border-b border-borderDefault sticky top-0 transition-colors duration-300">
                         <tr>

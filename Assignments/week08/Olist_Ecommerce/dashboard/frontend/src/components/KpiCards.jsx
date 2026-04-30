@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, ShoppingCart, TrendingUp, Package } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Package, Truck, Star } from 'lucide-react';
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -42,10 +42,24 @@ const KpiCards = ({ kpis, theme }) => {
             color: 'text-primary', 
             bg: isDark ? 'bg-primary/10' : 'bg-[#EEF2FF]' 
         },
+        { 
+            title: 'Total Freight', 
+            value: formatCurrency(kpis.total_freight), 
+            icon: Truck, 
+            color: 'text-error', 
+            bg: isDark ? 'bg-error/10' : 'bg-[#FEF2F2]' 
+        },
+        { 
+            title: 'Avg Review Score', 
+            value: kpis.avg_review_score.toFixed(1) + ' / 5.0', 
+            icon: Star, 
+            color: 'text-secondary', 
+            bg: isDark ? 'bg-secondary/10' : 'bg-primaryLight' 
+        },
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {cards.map((card, index) => (
                 <div 
                     key={index} 

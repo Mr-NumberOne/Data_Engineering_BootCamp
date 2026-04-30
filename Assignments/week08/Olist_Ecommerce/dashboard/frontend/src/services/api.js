@@ -69,3 +69,13 @@ export const fetchCohorts = async (filters) => {
     const response = await axios.get(`${API_URL}/customers/cohorts?${buildParams(filters)}`);
     return response.data;
 };
+
+export const fetchCustomerSatisfaction = async (filters) => {
+    const response = await axios.get(`${API_URL}/customers/satisfaction?${buildParams(filters)}`);
+    return response.data;
+};
+
+export const fetchFreightRatio = async (filters) => {
+    const response = await axios.get(`${API_URL}/logistics/freight-ratio?${buildParams(filters)}`);
+    return response.data;
+};

@@ -1,6 +1,7 @@
 import React from 'react';
 import GeoDistributionChart from '../components/GeoDistributionChart';
 import CohortMatrix from '../components/CohortMatrix';
+import ReviewDistributionChart from '../components/ReviewDistributionChart';
 import DataTable from '../components/DataTable';
 import { Database } from 'lucide-react';
 
@@ -22,8 +23,9 @@ const CustomersPage = ({ data, loading, theme }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 flex flex-col gap-6">
                     <GeoDistributionChart data={data.geo} theme={theme} />
+                    <ReviewDistributionChart data={data.satisfaction} theme={theme} />
                 </div>
                 <div className="lg:col-span-2">
                     <CohortMatrix data={data.cohorts} theme={theme} />

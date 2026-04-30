@@ -1,5 +1,6 @@
 import React from 'react';
 import { Doughnut } from 'react-chartjs-2';
+import InfoTooltip from './InfoTooltip';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -22,9 +23,9 @@ const PaymentDistributionChart = ({ data, theme }) => {
             {
                 data: data.map(d => d.total_value),
                 backgroundColor: [
-                    '#476eae', // Primary
-                    '#3b82f6', // Secondary
-                    '#0ea5e9', // Tertiary
+                    '#4d6fb0', // Primary
+                    '#6385c9', // Secondary
+                    '#354e7d', // Tertiary
                     '#10b981', // Success
                     '#f59e0b', // Warning
                 ],
@@ -71,9 +72,10 @@ const PaymentDistributionChart = ({ data, theme }) => {
     return (
         <div className="bg-surface rounded-2xl p-6 shadow-soft transition-colors duration-300 h-full flex flex-col border border-borderDefault">
             <div className="mb-6">
-                <div className="flex items-center gap-3 mb-1">
-                    <span className="px-2 py-0.5 rounded-[4px] bg-primaryLight text-primary text-[11px] font-semibold font-mono">GET</span>
+                <div className="flex items-center mb-1">
+                    <span className="px-2 py-0.5 rounded-[4px] bg-primaryLight text-primary text-[11px] font-semibold font-mono mr-3">GET</span>
                     <h2 className="text-[15px] font-semibold font-mono text-textPrimary">/v1/payments/distribution</h2>
+                    <InfoTooltip text="Shows the proportion of total revenue coming from each payment method. Helps understand customer payment preferences." />
                 </div>
                 <p className="text-[13px] text-textSecondary font-sans">Revenue breakdown by payment method</p>
             </div>

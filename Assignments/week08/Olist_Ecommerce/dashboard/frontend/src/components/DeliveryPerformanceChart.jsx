@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
+import InfoTooltip from './InfoTooltip';
 
 const DeliveryPerformanceChart = ({ data, theme }) => {
     if (!data || data.length === 0) return null;
@@ -60,9 +61,10 @@ const DeliveryPerformanceChart = ({ data, theme }) => {
     return (
         <div className="bg-surface rounded-2xl p-6 shadow-soft transition-colors duration-300 h-full flex flex-col border border-borderDefault">
             <div className="mb-6">
-                <div className="flex items-center gap-3 mb-1">
-                    <span className="px-2 py-0.5 rounded-[4px] bg-primaryLight text-primary text-[11px] font-semibold font-mono">GET</span>
-                    <h2 className="text-[15px] font-semibold font-mono text-textPrimary">/v1/logistics/delays</h2>
+                <div className="flex items-center mb-1">
+                    <span className="px-2 py-0.5 rounded-[4px] bg-primaryLight text-primary text-[11px] font-semibold font-mono mr-3">GET</span>
+                    <h2 className="text-[15px] font-semibold font-mono text-textPrimary">/v1/delivery/performance</h2>
+                    <InfoTooltip text="Tracks the percentage of orders delivered later than the estimated delivery date across the top states. A key metric for customer satisfaction." />
                 </div>
                 <p className="text-[13px] text-textSecondary font-sans">% of orders delivered after estimate</p>
             </div>

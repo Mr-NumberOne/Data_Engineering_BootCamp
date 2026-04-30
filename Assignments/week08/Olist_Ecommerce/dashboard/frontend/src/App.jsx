@@ -8,7 +8,7 @@ import LogisticsPage from './pages/LogisticsPage';
 import { 
   fetchKpis, fetchSalesTrend, fetchPaymentDistribution, fetchCategoryRevenue, fetchDeliveryPerformance,
   fetchFilterOptions, fetchRfmCustomers, fetchSellerPerformance, fetchDayOfWeek, fetchLeadConversion,
-  fetchGeoDistribution, fetchCohorts
+  fetchGeoDistribution, fetchCohorts, fetchCustomerSatisfaction, fetchFreightRatio
 } from './services/api';
 
 function App() {
@@ -17,7 +17,8 @@ function App() {
   
   const [dashboardData, setDashboardData] = useState({
     kpis: null, salesTrend: null, payments: null, categories: null, delivery: null,
-    rfm: null, sellers: null, dayOfWeek: null, leads: null, geo: null, cohorts: null
+    rfm: null, sellers: null, dayOfWeek: null, leads: null, geo: null, cohorts: null,
+    satisfaction: null, freightRatio: null
   });
   
   const [loading, setLoading] = useState(true);
@@ -48,7 +49,8 @@ function App() {
       try {
         const [
           kpis, salesTrend, payments, categories, delivery,
-          rfm, sellers, dayOfWeek, leads, geo, cohorts
+          rfm, sellers, dayOfWeek, leads, geo, cohorts,
+          satisfaction, freightRatio
         ] = await Promise.all([
           fetchKpis(filters),
           fetchSalesTrend(filters),
@@ -60,12 +62,15 @@ function App() {
           fetchDayOfWeek(filters),
           fetchLeadConversion(),
           fetchGeoDistribution(filters),
-          fetchCohorts(filters)
+          fetchCohorts(filters),
+          fetchCustomerSatisfaction(filters),
+          fetchFreightRatio(filters)
         ]);
         
         setDashboardData({
           kpis, salesTrend, payments, categories, delivery,
-          rfm, sellers, dayOfWeek, leads, geo, cohorts
+          rfm, sellers, dayOfWeek, leads, geo, cohorts,
+          satisfaction, freightRatio
         });
       } catch (error) {
         console.error("Error loading dashboard data:", error);
