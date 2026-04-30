@@ -1,6 +1,7 @@
 # Olist E-Commerce Data Warehouse — Documentation
 
 ## Table of Contents
+
 1. [Architecture Overview](#1-architecture-overview)
 2. [Data Model](#2-data-model)
 3. [Pipeline Design](#3-pipeline-design)
@@ -37,10 +38,10 @@ Our DWH has **4 fact tables** (`fact_order_items`, `fact_payments`, `fact_review
 | **Infrastructure** | Minimal | Substantial | Cloud-oriented |
 
 **Why Kimball wins here:**
+
 1. **Single source** — We have one SQLite database, not 50 operational systems. Inmon's enterprise bus architecture is overkill.
 2. **Analytical focus** — The business needs are purely analytical (sales trends, customer segmentation, delivery KPIs). Star schemas are purpose-built for this.
 3. **Performance** — Star schemas minimize joins in analytical queries. A sales trend query hits exactly 2 tables (fact + dim_date), not 5+ normalized tables.
-4. **Simplicity** — The team can understand and maintain a star schema without extensive DW expertise.
 
 **Why not Medallion?** The Medallion architecture (Bronze/Silver/Gold) is designed for data lakes with streaming data, multiple raw sources, and cloud-native infrastructure (Databricks, Delta Lake). Our static SQLite dataset doesn't benefit from this complexity.
 
@@ -53,7 +54,7 @@ Our DWH has **4 fact tables** (`fact_order_items`, `fact_payments`, `fact_review
   │  │              olist.sqlite (11 tables)                     │  │
   │  │  orders | order_items | customers | products | sellers    │  │
   │  │  order_payments | order_reviews | geolocation             │  │
-  │  │  product_category_name_translation                       │  │
+  │  │  product_category_name_translation                        │  │
   │  │  leads_qualified | leads_closed                           │  │
   │  └───────────────────────────────────────────────────────────┘  │
   └──────────────────────────────┬──────────────────────────────────┘
@@ -62,32 +63,32 @@ Our DWH has **4 fact tables** (`fact_order_items`, `fact_payments`, `fact_review
   ┌─────────────────────────────────────────────────────────────────┐
   │                   PostgreSQL ELT PIPELINE                       │
   │                                                                 │
-  │  ┌─────────────────────┐    ┌─────────────────────────────┐    │
+  │  ┌─────────────────────┐    ┌──────────────────────────────┐    │
   │  │  extract_load.py    │    │  SQL Scripts (01-11)         │    │
   │  │  SQLite -> staging  │───>│  staging -> dwh schema       │    │
   │  │  via pandas/psycopg2│    │  PostgreSQL-native SQL       │    │
-  │  └─────────────────────┘    └─────────────────────────────┘    │
+  │  └─────────────────────┘    └──────────────────────────────┘    │
   └──────────────────────────────┬──────────────────────────────────┘
                                  │
                                  v
   ┌─────────────────────────────────────────────────────────────────┐
   │              PostgreSQL: olist_dwh database                     │
   │                                                                 │
-  │  ┌─────────────────────┐    ┌─────────────────────────────┐    │
-  │  │  staging schema     │    │  dwh schema (Galaxy Schema)  │    │
-  │  │  (raw source data)  │    │                             │    │
-  │  │  11 tables          │    │  DIMENSIONS:                │    │
-  │  └─────────────────────┘    │  dim_date, dim_customer     │    │
-  │                             │  dim_product, dim_seller    │    │
-  │                             │  dim_payment_type           │    │
-  │                             │  dim_order_status           │    │
-  │                             │                             │    │
-  │                             │  FACTS (4 stars = galaxy):  │    │
-  │                             │  fact_order_items           │    │
-  │                             │  fact_payments              │    │
-  │                             │  fact_reviews               │    │
-  │                             │  fact_leads                 │    │
-  │                             └─────────────────────────────┘    │
+  │  │  staging schema     │    │  dwh schema (Galaxy Schema) │     │
+  │  │  (raw source data)  │    │                             │     │
+  │  ┌─────────────────────┐    ┌─────────────────────────────┐     │
+  │  │  11 tables          │    │  DIMENSIONS:                │     │
+  │  └─────────────────────┘    │  dim_date, dim_customer     │     │ 
+  │                             │  dim_product, dim_seller    │     │
+  │                             │  dim_payment_type           │     │
+  │                             │  dim_order_status           │     │
+  │                             │                             │     │
+  │                             │  FACTS (4 stars = galaxy):  │     │
+  │                             │  fact_order_items           │     │
+  │                             │  fact_payments              │     │
+  │                             │  fact_reviews               │     │
+  │                             │  fact_leads                 │     │
+  │                             └─────────────────────────────┘     │
   └──────────────────────────────┬──────────────────────────────────┘
                                  │
                                  v
@@ -109,7 +110,7 @@ We identified **4 distinct business processes**, each represented by a fact tabl
 | # | Business Process | Fact Table | Grain | Why Separate? |
 |---|---|---|---|---|
 | 1 | **Order Sales** | `fact_order_items` | 1 row per order line item | Core revenue fact — most granular sales data |
-| 2 | **Payments** | `fact_payments` | 1 row per payment transaction | Orders can have multiple payment methods (1.04 avg) |
+| 2 | **Payments** | `fact_payments` | 1 row per payment transaction | Orders can have multiple payment methods |
 | 3 | **Reviews** | `fact_reviews` | 1 row per review | Reviews are at order level, not item level |
 | 4 | **Seller Acquisition** | `fact_leads` | 1 row per qualified lead | Completely different business process and grain |
 
@@ -118,7 +119,7 @@ We identified **4 distinct business processes**, each represented by a fact tabl
 A common mistake is cramming everything into one fact table. Here's why we don't:
 
 - **fact_order_items vs fact_payments**: An order with 2 items and 2 payment methods would create 4 rows if combined (cross join), incorrectly inflating both revenue and payment amounts.
-- **fact_order_items vs fact_reviews**: Reviews are at the order level (1 review per order), while items are at the line-item level (avg 1.14 items/order). Combining would duplicate review scores across items.
+- **fact_order_items vs fact_reviews**: Reviews are at the order level (1 review per order), while items are at the line-item level. Combining would duplicate review scores across items.
 - **fact_leads**: Entirely different grain (leads, not orders), different dimensions, different users.
 
 ### Dimension Tables
@@ -135,86 +136,7 @@ A common mistake is cramming everything into one fact table. Here's why we don't
 
 ### Galaxy Schema Diagram
 
-```
-                         dim_date
-                        ┌────────────────┐
-                        │ date_key (PK)  │
-                        │ full_date      │
-                        │ year, quarter  │
-                        │ month, day     │
-                        │ day_name       │
-                        │ is_weekend     │
-                        │ year_month     │
-                        └───────┬────────┘
-                                │
-    dim_customer                │              dim_product
-   ┌──────────────────┐         │         ┌──────────────────────┐
-   │ customer_key(PK) │         │         │ product_key (PK)     │
-   │ customer_unique_id│        │         │ product_id           │
-   │ customer_city    │         │         │ category_name        │
-   │ customer_state   │         │         │ category_name_english│
-   │ zip_code_prefix  │         │         │ weight, dimensions   │
-   │ latitude         │         │         │ photos_qty           │
-   │ longitude        │         │         └──────────┬───────────┘
-   └────────┬─────────┘         │                    │
-            │      ┌────────────┴────────────┐       │
-            ├──────┤   fact_order_items       ├───────┤
-            │      │─────────────────────────│       │
-            │      │ order_item_key (PK)     │       │
-            │      │ order_id, order_item_id │       │   dim_seller
-            │      │ customer_key (FK)       │       │  ┌──────────────┐
-            │      │ product_key (FK)        │       │  │ seller_key   │
-            │      │ seller_key (FK)         │───────┘  │ seller_id    │
-            │      │ order_status_key (FK)   │──────────┤ seller_city  │
-            │      │ purchase_date_key (FK)  │          │ seller_state │
-            │      │ price, freight_value    │          │ lat, lng     │
-            │      │ delivery_days           │          └──────────────┘
-            │      │ estimated_delivery_days │
-            │      │ is_late_delivery        │   dim_order_status
-            │      └─────────────────────────┘  ┌──────────────────┐
-            │                                   │ order_status_key │
-            │      ┌─────────────────────────┐  │ order_status     │
-            ├──────┤   fact_payments         │  └──────────────────┘
-            │      │─────────────────────────│
-            │      │ payment_key (PK)        │   dim_payment_type
-            │      │ order_id               │  ┌──────────────────┐
-            │      │ customer_key (FK)       │  │ payment_type_key │
-            │      │ payment_type_key (FK)   │──┤ payment_type     │
-            │      │ purchase_date_key (FK)  │  └──────────────────┘
-            │      │ payment_sequential      │
-            │      │ payment_installments    │
-            │      │ payment_value           │
-            │      └─────────────────────────┘
-            │
-            │      ┌─────────────────────────┐
-            └──────┤   fact_reviews          │
-                   │─────────────────────────│
-                   │ review_key (PK)         │
-                   │ order_id, review_id     │
-                   │ customer_key (FK)       │
-                   │ product_key (FK)        │
-                   │ review_date_key (FK)    │
-                   │ review_score            │
-                   │ has_comment             │
-                   │ response_time_hours     │
-                   └─────────────────────────┘
-
-
-    ┌─────────────────────────┐
-    │   fact_leads            │
-    │─────────────────────────│
-    │ lead_key (PK)           │
-    │ mql_id                  │
-    │ seller_key (FK)         │───── dim_seller
-    │ contact_date_key (FK)   │───── dim_date
-    │ won_date_key (FK)       │───── dim_date
-    │ origin                  │
-    │ is_converted            │
-    │ conversion_days         │
-    │ business_segment        │
-    │ declared_monthly_revenue│
-    └─────────────────────────┘
-```
+![Olist DWH Galaxy Schema Diagram](galaxy_schema.png)
 
 ### Grain Definitions
 
@@ -240,12 +162,27 @@ In a dimensional model, **every fact-to-dimension relationship is M:1** -- many 
 | `fact_order_items` -> `dim_seller` | **M:1** | Many order items sold by one seller |
 | `fact_order_items` -> `dim_date` | **M:1** | Many order items purchased on one date |
 | `fact_order_items` -> `dim_order_status` | **M:1** | Many order items share one order status |
+
+---
+
+| Fact Table | Dimension | Cardinality | Meaning |
+|---|---|---|---|
 | `fact_payments` -> `dim_customer` | **M:1** | Many payments made by one customer |
 | `fact_payments` -> `dim_payment_type` | **M:1** | Many payments use one payment type |
 | `fact_payments` -> `dim_date` | **M:1** | Many payments on one purchase date |
+
+---
+
+| Fact Table | Dimension | Cardinality | Meaning |
+|---|---|---|---|
 | `fact_reviews` -> `dim_customer` | **M:1** | Many reviews written by one customer |
 | `fact_reviews` -> `dim_product` | **M:1** | Many reviews about one product |
 | `fact_reviews` -> `dim_date` | **M:1** | Many reviews created on one date |
+
+---
+
+| Fact Table | Dimension | Cardinality | Meaning |
+|---|---|---|---|
 | `fact_leads` -> `dim_seller` | **M:1** | Many leads convert to one seller (nullable) |
 | `fact_leads` -> `dim_date` (contact) | **M:1** | Many leads contacted on one date |
 | `fact_leads` -> `dim_date` (won) | **M:1** | Many leads won on one date (nullable) |
@@ -306,6 +243,7 @@ This is the power of **conformed dimensions** in a Galaxy Schema -- they enable 
 **Philosophy**: Separate "load" from "transform". Load raw data first (EL), then transform using SQL inside the database. This is the modern industry ELT pattern used by dbt, Snowflake, and BigQuery workflows — applied here to PostgreSQL.
 
 **Why ELT over ETL?**
+
 - Transforms run inside the database engine, leveraging PostgreSQL's optimizer
 - SQL scripts are version-controllable, auditable, and reviewable
 - No data leaves the database during transformation (no memory pressure)
@@ -346,6 +284,7 @@ This is the power of **conformed dimensions** in a Galaxy Schema -- they enable 
 ```
 
 **Key characteristics:**
+
 - **ELT pattern**: raw data lands in `staging` schema, transforms produce the galaxy schema in `dwh` schema
 - **Schema separation**: raw source data (`staging.*`) is isolated from analytical tables (`dwh.*`)
 - **Credentials via `.env`**: passwords never hardcoded in source code
@@ -354,18 +293,6 @@ This is the power of **conformed dimensions** in a Galaxy Schema -- they enable 
 - **`ANALYZE`**: updates PostgreSQL query planner statistics for optimal execution plans
 - **Idempotent**: safe to re-run — all scripts use `DROP IF EXISTS + CREATE`
 - **Error handling**: structured logging, phase timing, and validation after each step
-
-### Why PostgreSQL?
-
-| Feature | PostgreSQL | Why It Matters |
-|---|---|---|
-| **Multi-user access** | Concurrent connections | Multiple analysts can query simultaneously |
-| **ACID compliance** | Full transactional guarantees | Data consistency during pipeline runs |
-| **Schema separation** | Native `CREATE SCHEMA` | Clean isolation between raw and analytical data |
-| **Real constraints** | PK, FK, CHECK, UNIQUE | Data integrity enforced at the database level |
-| **Query optimizer** | Cost-based, statistics-driven | `ANALYZE` + B-tree indexes = fast queries |
-| **BI tool integration** | JDBC/ODBC standard | Tableau, Metabase, Power BI connect natively |
-| **Production-grade** | Enterprise standard | Battle-tested for 30+ years |
 
 ---
 
@@ -409,6 +336,7 @@ We created **25+ indexes** across all tables, targeting the most common analytic
 ### Why Not Partition?
 
 With ~100K orders spanning 2 years, physical partitioning would add complexity without benefit:
+
 - The entire fact_order_items table (112K rows) fits comfortably in memory
 - B-tree indexes on date_key are sufficient for range filtering
 - PostgreSQL's table statistics (via `ANALYZE`) already guide the planner to optimal plans
@@ -418,6 +346,7 @@ With ~100K orders spanning 2 years, physical partitioning would add complexity w
 ### Pre-calculated Metrics
 
 The fact tables include pre-calculated derived fields to avoid repeated computation:
+
 - `delivery_days`: `(delivered_date - purchase_date)` in days
 - `estimated_delivery_days`: `(estimated_date - purchase_date)` in days
 - `is_late_delivery`: boolean flag (`delivered > estimated`)
@@ -444,7 +373,7 @@ This trades storage space for query speed — a deliberate and standard DWH opti
 
 6. **Leads are independent**: The leads funnel (fact_leads) is a separate business process from the order flow. Not all sellers in orders originated from the leads pipeline.
 
-7. **SCD Type 1 for all dimensions**: We overwrite dimension attributes on reload. For a historical dataset with no ongoing updates, SCD Type 2 (historical tracking) would add complexity without value.
+7. **SCD Type 2 for core dimensions**: We implemented Slowly Changing Dimension (SCD) Type 2 for `dim_customer` and `dim_seller`. This allows us to track historical changes in geographic locations, ensuring that analytical queries reflect the customer's location at the exact time an order was placed.
 
 ---
 
@@ -455,6 +384,7 @@ This trades storage space for query speed — a deliberate and standard DWH opti
 | **Galaxy schema over snowflake** | Denormalized dimensions use more storage | Simpler queries, fewer joins, better query performance |
 | **Surrogate keys (integers)** | Extra column per table, join overhead | Consistent key type, faster joins than UUID strings, independence from source IDs |
 | **Pre-calculated metrics** | Increased fact table width | Avoids repeated date arithmetic in every query; transforms are done once |
+| **SCD Type 2 for core dimensions** | Increased row count in dimensions | Enables precise point-in-time geographic analysis; tracks customer movement over time |
 | **Full refresh over incremental** | Re-processes all data each run | Simpler logic, no merge/upsert complexity; appropriate for this data size |
 | **Separate payment fact** | Extra table to maintain | Correct grain; combining with order_items would inflate revenue calculations |
 | **PostgreSQL over cloud DWH** | Requires local server management | Free, standard SQL, production-grade; cloud DWH (Snowflake, BigQuery) would be overkill for this dataset |
@@ -466,13 +396,16 @@ This trades storage space for query speed — a deliberate and standard DWH opti
 ## 8. How to Run
 
 ### Prerequisites
+
 - Python 3.11+
 - pandas, sqlalchemy, psycopg2-binary
 - python-dotenv
 - PostgreSQL 17+ running locally
 
 ### Configure Credentials
+
 Edit `.env` in the project root:
+
 ```env
 PG_HOST=localhost
 PG_PORT=5432
@@ -482,22 +415,28 @@ PG_DATABASE=olist_dwh
 ```
 
 ### Run the Pipeline
+
 ```bash
 cd Olist_Ecommerce
 python -m pipeline_postgres.run_pipeline
 ```
+
 Output: PostgreSQL database `olist_dwh` with schemas `staging` and `dwh`
 
 ### Run Analytical Queries
+
 ```bash
 python verify_queries.py
 ```
 
 ### Project Structure
+
 ```
 Olist_Ecommerce/
-├── .env                              # PostgreSQL credentials
-├── requirements/
+├── .env                              # PostgreSQL credentials (create it from .env.example)
+├── .env.example                      # Template for credentials
+├── requirements.txt                  # Python dependencies
+├── requirements/ 
 │   └── olist.sqlite                  # Source database (11 tables)
 ├── pipeline_postgres/                # PostgreSQL ELT Pipeline
 │   ├── config.py                     # .env-based credential loading
@@ -509,32 +448,26 @@ Olist_Ecommerce/
 │   │   ├── 04_dim_seller.sql
 │   │   ├── 05_dim_payment_type.sql
 │   │   ├── 06_dim_order_status.sql
+│   │   ├── 06b_dim_marketing_origin.sql
 │   │   ├── 07_fact_order_items.sql
 │   │   ├── 08_fact_payments.sql
 │   │   ├── 09_fact_reviews.sql
 │   │   ├── 10_fact_leads.sql
 │   │   └── 11_indexes.sql
 │   └── run_pipeline.py              # Orchestrator with logging
+├── dashboard/                        # Analytical Dashboard
+│   ├── backend/                      # FastAPI (Python)
+│   ├── frontend/                     # React (Vite)
+│   └── setup.md                      # Dashboard installation guide
 ├── analytical_queries/
 │   └── queries.sql                   # 10 sample queries (PG syntax)
 ├── logs/
 │   └── pipeline_postgres.log
 ├── verify_queries.py                 # Quick verification script
 └── docs/
-    └── documentation.md              # This file
+    ├── documentation.md              # Detailed project documentation
+    ├── cleaning.md                   # Data cleaning decisions
+    └── datamodeling.md               # Data modeling strategies
 ```
 
-### Pipeline Execution Results
-
-| Metric | Value |
-|---|---|
-| **Total Time** | 231.80s |
-| **Extract+Load** | 215.57s (dominated by 1M-row geolocation) |
-| **Transform** | 14.38s |
-| **Revenue** | R$13,591,643.70 |
-| **fact_order_items** | 112,650 rows |
-| **fact_payments** | 103,886 rows |
-| **fact_reviews** | 99,224 rows |
-| **fact_leads** | 8,000 rows |
-| **Revenue reconciliation** | Passed |
-| **Referential integrity** | Passed |
+**The End...**
