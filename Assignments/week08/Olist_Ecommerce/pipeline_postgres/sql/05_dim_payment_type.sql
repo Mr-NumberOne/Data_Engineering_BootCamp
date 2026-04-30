@@ -1,6 +1,8 @@
 -- ============================================================
 -- dim_payment_type: Payment type lookup dimension
 -- ============================================================
+-- Unknown member row inserted at payment_type_key = -1.
+-- ============================================================
 
 DROP TABLE IF EXISTS dwh.dim_payment_type CASCADE;
 
@@ -13,4 +15,8 @@ FROM (
         CASE WHEN payment_type = 'not_defined' THEN 'other' ELSE payment_type END
             AS payment_type_clean
     FROM staging.order_payments
-) sub;
+) sub
+
+UNION ALL
+
+SELECT -1 AS payment_type_key, 'Unknown' AS payment_type;

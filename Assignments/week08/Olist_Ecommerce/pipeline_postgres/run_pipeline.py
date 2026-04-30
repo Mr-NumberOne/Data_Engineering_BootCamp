@@ -109,7 +109,7 @@ def validate_warehouse(engine) -> None:
 
     expected_tables = [
         "dim_date", "dim_customer", "dim_product", "dim_seller",
-        "dim_payment_type", "dim_order_status",
+        "dim_payment_type", "dim_order_status", "dim_marketing_origin",
         "fact_order_items", "fact_payments", "fact_reviews", "fact_leads",
     ]
 

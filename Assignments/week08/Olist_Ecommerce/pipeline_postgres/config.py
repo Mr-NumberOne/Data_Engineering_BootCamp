@@ -73,6 +73,7 @@ SQL_SCRIPTS = [
     "04_dim_seller.sql",
     "05_dim_payment_type.sql",
     "06_dim_order_status.sql",
+    "06b_dim_marketing_origin.sql",
     "07_fact_order_items.sql",
     "08_fact_payments.sql",
     "09_fact_reviews.sql",

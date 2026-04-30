@@ -126,11 +126,12 @@ A common mistake is cramming everything into one fact table. Here's why we don't
 | Dimension | Rows | Key Design Decision |
 |---|---|---|
 | `dim_date` | 864 | Generated calendar (not extracted). Covers Aug 2016 – Dec 2018 with buffer. Integer `date_key` (YYYYMMDD) for fast range filters. |
-| `dim_customer` | 96,096 | Uses `customer_unique_id` as business key. Source has 99,441 customer_ids (one per order) but only 96,096 unique customers. |
-| `dim_product` | 32,951 | Merges English category translations. 610 NULL categories → "Unknown". |
-| `dim_seller` | 3,095 | Enriched with avg lat/lng from geolocation table. |
-| `dim_payment_type` | 5 | Lookup: credit_card, boleto, voucher, debit_card, other |
-| `dim_order_status` | 8 | Lookup: delivered, shipped, canceled, unavailable, invoiced, processing, created, approved |
+| `dim_customer` | 96,356 | **SCD Type 2**. Tracks historical geographic location changes using `valid_from` and `valid_to`. |
+| `dim_product` | 32,952 | Merges English category translations. 610 NULL categories → "Unknown". |
+| `dim_seller` | 3,096 | **SCD Type 2**. Enriched with avg lat/lng from geolocation table. |
+| `dim_payment_type` | 6 | Lookup: credit_card, boleto, voucher, debit_card, other, unknown |
+| `dim_order_status` | 9 | Lookup: delivered, shipped, canceled, unavailable, invoiced, processing, created, approved, unknown |
+| `dim_marketing_origin` | 11 | Extracted from fact_leads to prevent degenerate dimension |
 
 ### Galaxy Schema Diagram
 

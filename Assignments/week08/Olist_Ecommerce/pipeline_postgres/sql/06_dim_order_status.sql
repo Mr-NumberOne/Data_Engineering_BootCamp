@@ -1,6 +1,8 @@
 -- ============================================================
 -- dim_order_status: Order status lookup dimension
 -- ============================================================
+-- Unknown member row inserted at order_status_key = -1.
+-- ============================================================
 
 DROP TABLE IF EXISTS dwh.dim_order_status CASCADE;
 
@@ -11,4 +13,8 @@ SELECT
 FROM (
     SELECT DISTINCT order_status
     FROM staging.orders
-) sub;
+) sub
+
+UNION ALL
+
+SELECT -1 AS order_status_key, 'Unknown' AS order_status;

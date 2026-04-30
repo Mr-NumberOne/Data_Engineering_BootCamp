@@ -2,7 +2,12 @@
 -- fact_reviews: Customer review fact table
 -- ============================================================
 -- Grain: one row per review
--- Uses DISTINCT ON to get the first product per order
+-- Uses DISTINCT ON to get the first product per order.
+--
+-- SCD2 temporal join to dim_customer using the ORDER's
+-- purchase timestamp (not the review date) since the review
+-- belongs to the order context.
+-- COALESCE to -1 for missing dimension keys.
 -- ============================================================
 
 DROP TABLE IF EXISTS dwh.fact_reviews CASCADE;
@@ -20,8 +25,8 @@ SELECT
 
     r.order_id,
     r.review_id,
-    dc.customer_key,
-    dp.product_key,
+    COALESCE(dc.customer_key, -1) AS customer_key,
+    COALESCE(dp.product_key, -1)  AS product_key,
 
     COALESCE(
         CAST(TO_CHAR(r.review_creation_date::TIMESTAMP, 'YYYYMMDD') AS INTEGER),
@@ -41,8 +46,13 @@ INNER JOIN staging.orders o
     ON r.order_id = o.order_id
 INNER JOIN staging.customers c
     ON o.customer_id = c.customer_id
-INNER JOIN dwh.dim_customer dc
+
+-- SCD2 temporal join: resolve to the customer version active at purchase time
+LEFT JOIN dwh.dim_customer dc
     ON c.customer_unique_id = dc.customer_unique_id
+    AND o.order_purchase_timestamp::DATE >= dc.valid_from
+    AND o.order_purchase_timestamp::DATE <  dc.valid_to
+
 LEFT JOIN first_product fp
     ON r.order_id = fp.order_id
 LEFT JOIN dwh.dim_product dp

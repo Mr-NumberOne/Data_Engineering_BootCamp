@@ -2,8 +2,14 @@
 -- fact_order_items: Primary sales fact table
 -- ============================================================
 -- Grain: one row per order line item (order_id + order_item_id)
--- PostgreSQL version: uses EXTRACT(EPOCH FROM ...) for date diffs
--- and TO_CHAR for date_key generation
+--
+-- SCD2 temporal joins: dim_customer and dim_seller are resolved
+-- using the order_purchase_timestamp against the dimension's
+-- valid_from / valid_to interval, ensuring the fact record
+-- links to the geographic version that was current at purchase.
+--
+-- COALESCE to -1 ensures late-arriving / missing dimensions
+-- resolve to the "Unknown" member row.
 -- ============================================================
 
 DROP TABLE IF EXISTS dwh.fact_order_items CASCADE;
@@ -16,11 +22,11 @@ SELECT
     oi.order_id,
     oi.order_item_id,
 
-    -- Surrogate key lookups
-    dc.customer_key,
-    dp.product_key,
-    ds.seller_key,
-    dos.order_status_key,
+    -- Surrogate key lookups (COALESCE to -1 for missing dims)
+    COALESCE(dc.customer_key, -1)     AS customer_key,
+    COALESCE(dp.product_key, -1)      AS product_key,
+    COALESCE(ds.seller_key, -1)       AS seller_key,
+    COALESCE(dos.order_status_key, -1) AS order_status_key,
 
     -- Date keys (integer YYYYMMDD)
     CAST(TO_CHAR(o.order_purchase_timestamp::TIMESTAMP, 'YYYYMMDD') AS INTEGER)
@@ -66,11 +72,21 @@ INNER JOIN staging.orders o
     ON oi.order_id = o.order_id
 INNER JOIN staging.customers c
     ON o.customer_id = c.customer_id
-INNER JOIN dwh.dim_customer dc
+
+-- SCD2 temporal join: resolve to the customer version active at purchase time
+LEFT JOIN dwh.dim_customer dc
     ON c.customer_unique_id = dc.customer_unique_id
-INNER JOIN dwh.dim_product dp
+    AND o.order_purchase_timestamp::DATE >= dc.valid_from
+    AND o.order_purchase_timestamp::DATE <  dc.valid_to
+
+LEFT JOIN dwh.dim_product dp
     ON oi.product_id = dp.product_id
-INNER JOIN dwh.dim_seller ds
+
+-- SCD2 temporal join: resolve to the seller version active at purchase time
+LEFT JOIN dwh.dim_seller ds
     ON oi.seller_id = ds.seller_id
-INNER JOIN dwh.dim_order_status dos
+    AND o.order_purchase_timestamp::DATE >= ds.valid_from
+    AND o.order_purchase_timestamp::DATE <  ds.valid_to
+
+LEFT JOIN dwh.dim_order_status dos
     ON o.order_status = dos.order_status;
