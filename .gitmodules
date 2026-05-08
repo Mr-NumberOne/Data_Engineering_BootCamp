@@ -13,3 +13,6 @@
 [submodule "Lectures/Class_Materials/data_sources"]
 	path = Lectures/Class_Materials/data_sources
 	url = https://github.com/NoraHussain/data-source.git
+[submodule "Assignments/week09/nifi_assignment"]
+	path = Assignments/week09/nifi_assignment
+	url = https://github.com/Mr-NumberOne/NiFi_Pipeline_with_hadoop_demo_project.git
