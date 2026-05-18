@@ -1,10 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════
--- KENAN HIVE ASSIGNMENT - SCD TYPE 2 PIPELINE
+-- HIVE ASSIGNMENT - SCD TYPE 2 PIPELINE
 -- ═══════════════════════════════════════════════════════════════
 
 -- PART 1: DATABASE SETUP
-CREATE DATABASE IF NOT EXISTS kenan_db;
-USE kenan_db;
+CREATE DATABASE IF NOT EXISTS hive_db;
+USE hive_db;
 
 -- ═══════════════════════════════════════════════════════════════
 -- TASK 1: INTERNAL & EXTERNAL TABLES + DELIMITER HANDLING

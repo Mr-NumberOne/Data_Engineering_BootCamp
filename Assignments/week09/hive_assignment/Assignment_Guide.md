@@ -1,4 +1,4 @@
-# 🐝 Kenan Hive Assignment — Complete Step-by-Step Guide
+# 🐝 Hive Assignment — Complete Step-by-Step Guide
 
 This guide walks you through **every step** of the assignment: spinning up the Docker cluster, connecting DBeaver, and executing all tasks with SQL.
 
@@ -90,8 +90,8 @@ Fill in the following:
 #### Step 1.1: Create the Database
 
 ```sql
-CREATE DATABASE IF NOT EXISTS kenan_db;
-USE kenan_db;
+CREATE DATABASE IF NOT EXISTS hive_db;
+USE hive_db;
 ```
 
 ---
